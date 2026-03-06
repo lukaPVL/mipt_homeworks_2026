@@ -6,6 +6,25 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
 
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",
+    "ANN",
+    "COM812",
+    "ISC001",
+]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
 [tool.pyrefly]
 project-includes = [
     "**/*.py*",
