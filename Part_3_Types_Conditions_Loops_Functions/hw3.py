@@ -76,7 +76,7 @@ def parse_amount(amount_str: str) -> float | None:
 def validate_category(category: str) -> bool:
     return all(ch not in " .," for ch in category)
 
-def process_income(parts: list, incomes: list) -> str:
+def process_income(parts: list[str], incomes: list[dict]) -> str:
     if len(parts) != INCOME_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -94,7 +94,7 @@ def process_income(parts: list, incomes: list) -> str:
     })
     return OP_SUCCESS_MSG
 
-def process_cost(parts, expenses):
+def process_cost(parts: list[str], expenses: list[dict]) -> str:
     if len(parts) != COST_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -118,7 +118,7 @@ def process_cost(parts, expenses):
 
     return OP_SUCCESS_MSG
 
-def is_before_or_equal(date1: ParsedDate, date2: ParsedDate):
+def is_before_or_equal(date1: ParsedDate, date2: ParsedDate) -> bool:
     if date1[2] != date2[2]:
         return date1[2] < date2[2]
 
@@ -130,14 +130,14 @@ def is_before_or_equal(date1: ParsedDate, date2: ParsedDate):
 def is_same_month(date1: ParsedDate, date2: ParsedDate) -> bool:
     return date1[1] == date2[1] and date1[2] == date2[2]
 
-def calc_incomes(incomes: list, target_date: ParsedDate) -> float:
+def calc_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
     total = 0.0
     for income in incomes:
         if is_before_or_equal(income["date"], target_date):
             total += income["amount"]
     return total
 
-def monthly_incomes(incomes: list, target_date: ParsedDate) -> float:
+def monthly_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
     total = 0.0
     for income in incomes:
         first_check = is_same_month(income["date"], target_date)
@@ -146,16 +146,16 @@ def monthly_incomes(incomes: list, target_date: ParsedDate) -> float:
             total += income["amount"]
     return total
 
-def calc_expenses(expenses: list, target_date: ParsedDate) -> float:
+def calc_expenses(expenses: list[dict], target_date: ParsedDate) -> float:
     total = 0.0
     for expense in expenses:
         if is_before_or_equal(expense["date"], target_date):
             total += expense["amount"]
     return total
 
-def monthly_expenses(expenses: list, target_date: ParsedDate) -> tuple[float, dict]:
+def monthly_expenses(expenses: list[dict], target_date: ParsedDate) -> tuple[float, dict[str, float]]:
     total = 0.0
-    categories = {}
+    categories: dict[str, float] = {}
 
     for expense in expenses:
         if is_same_month(expense["date"], target_date) and is_before_or_equal(expense["date"], target_date):
@@ -165,7 +165,7 @@ def monthly_expenses(expenses: list, target_date: ParsedDate) -> tuple[float, di
 
     return total, categories
 
-def process_stats(parts: list, incomes: list, expenses: list) -> str:
+def process_stats(parts: list[str], incomes: list[dict], expenses: list[dict]) -> str:
     if len(parts) != STATS_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -203,8 +203,8 @@ def process_stats(parts: list, incomes: list, expenses: list) -> str:
     return "\n".join(output)
 
 def main() -> None:
-    incomes = []
-    expenses = []
+    incomes: list[dict] = []
+    expenses: list[dict] = []
 
     while True:
         try:
