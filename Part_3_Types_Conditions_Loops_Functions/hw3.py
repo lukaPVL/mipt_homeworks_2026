@@ -66,7 +66,7 @@ def parse_amount(amount_str: str) -> float | None:
     if amount_str.count(".") > 1:
         return None
 
-    amount = float(amount_str) if '.' in amount_str else int(amount_str)
+    amount = float(amount_str) if "." in amount_str else int(amount_str)
 
     if amount <= 0:
         return None
@@ -74,7 +74,7 @@ def parse_amount(amount_str: str) -> float | None:
     return amount
 
 def validate_category(category: str) -> bool:
-    return all(ch not in ' .,' for ch in category)
+    return all(ch not in " .," for ch in category)
 
 def process_income(parts: list, incomes: list) -> str:
     if len(parts) != INCOME_ARGS:
@@ -156,13 +156,13 @@ def calc_expenses(expenses: list, target_date: ParsedDate) -> float:
 def monthly_expenses(expenses: list, target_date: ParsedDate) -> tuple[float, dict]:
     total = 0.0
     categories = {}
-    
+
     for expense in expenses:
         if is_same_month(expense["date"], target_date) and is_before_or_equal(expense["date"], target_date):
             total += expense["amount"]
             cat = expense["category"]
             categories[cat] = categories.get(cat, 0.0) + expense["amount"]
-    
+
     return total, categories
 
 def process_stats(parts: list, incomes: list, expenses: list) -> str:
