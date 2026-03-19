@@ -155,7 +155,7 @@ def is_same_month(date1: ParsedDate, date2: ParsedDate) -> bool:
 
 
 def calc_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = float(0)
     for income in incomes:
         income_date = income[DATE_KEY]
         income_amount = income[AMOUNT_KEY]
@@ -171,7 +171,7 @@ def calc_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
 
 
 def monthly_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = float(0)
     for income in incomes:
         income_date = income[DATE_KEY]
         income_amount = income[AMOUNT_KEY]
@@ -187,7 +187,7 @@ def monthly_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float
 
 
 def calc_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = float(0)
     for expense in expenses:
         expense_date = expense[DATE_KEY]
         expense_amount = expense[AMOUNT_KEY]
@@ -200,6 +200,7 @@ def calc_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> float
         if is_before_or_equal(expense_date, target_date):
             total += float(expense_amount)
     return total
+
 
 def process_single_expense(
     expense: ExpenseDict,
@@ -227,12 +228,14 @@ def process_single_expense(
 
     return amount_float
 
+
 def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> MonthlyExpensesResult:
-    total = 0
     categories: dict[str, float] = {}
 
-    for expense in expenses:
-        total += process_single_expense(expense, target_date, categories)
+    total = sum(
+        process_single_expense(expense, target_date, categories)
+        for expense in expenses
+    )
 
     return float(total), categories
 
