@@ -296,7 +296,6 @@ def build_output(complete_stats: CompleteStats) -> list[str]:
     ])
 
     lines.extend(format_categories(monthly_stats[3]))
-
     return lines
 
 
