@@ -155,44 +155,84 @@ def is_same_month(date1: ParsedDate, date2: ParsedDate) -> bool:
 
 
 def calc_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = 0.0
     for income in incomes:
-        if is_before_or_equal(income[DATE_KEY], target_date):
-            total += income[AMOUNT_KEY]
-    return float(total)
+        income_date = income[DATE_KEY]
+        income_amount = income[AMOUNT_KEY]
+
+        if not isinstance(income_date, tuple):
+            continue
+        if not isinstance(income_amount, (int, float)):
+            continue
+
+        if is_before_or_equal(income_date, target_date):
+            total += float(income_amount)
+    return total
 
 
 def monthly_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = 0.0
     for income in incomes:
-        if is_same_month(income[DATE_KEY], target_date):
-            total += income[AMOUNT_KEY]
-    return float(total)
+        income_date = income[DATE_KEY]
+        income_amount = income[AMOUNT_KEY]
+
+        if not isinstance(income_date, tuple):
+            continue
+        if not isinstance(income_amount, (int, float)):
+            continue
+
+        if is_same_month(income_date, target_date):
+            total += float(income_amount)
+    return total
 
 
 def calc_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> float:
-    total = 0
+    total = 0.0
     for expense in expenses:
-        if is_before_or_equal(expense[DATE_KEY], target_date):
-            total += expense[AMOUNT_KEY]
-    return float(total)
+        expense_date = expense[DATE_KEY]
+        expense_amount = expense[AMOUNT_KEY]
+
+        if not isinstance(expense_date, tuple):
+            continue
+        if not isinstance(expense_amount, (int, float)):
+            continue
+
+        if is_before_or_equal(expense_date, target_date):
+            total += float(expense_amount)
+    return total
 
 
 def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> MonthlyExpensesResult:
-    total = 0
+    total = 0.0
     categories: dict[str, float] = {}
 
     for expense in expenses:
-        if not is_same_month(expense[DATE_KEY], target_date):
+
+        expense_date = expense[DATE_KEY]
+        expense_amount = expense[AMOUNT_KEY]
+        expense_category = expense[CATEGORY_KEY]
+
+        if not isinstance(expense_date, tuple):
             continue
-        total += expense[AMOUNT_KEY]
-        cat = expense[CATEGORY_KEY]
-        categories[cat] = categories.get(cat, 0) + expense[AMOUNT_KEY]
+        if not isinstance(expense_amount, (int, float)):
+            continue
+        if not isinstance(expense_category, str):
+            continue
+            
+        if not is_same_month(expense_date, target_date):
+            continue
 
-    return float(total), categories
+        total += float(expense_amount)
+        categories[expense_category] = categories.get(expense_category, 0.0) + float(expense_amount)
+
+    return total, categories
 
 
-def build_monthly_stats(incomes: list[IncomeDict], expenses: list[ExpenseDict], date: ParsedDate) -> MonthlyStats:
+def build_monthly_stats(
+    incomes: list[IncomeDict],
+    expenses: list[ExpenseDict],
+    date: ParsedDate
+) -> MonthlyStats:
     month_inc = monthly_incomes(incomes, date)
     month_exp, categories = monthly_expenses(expenses, date)
     month_result = month_inc - month_exp
@@ -200,7 +240,12 @@ def build_monthly_stats(incomes: list[IncomeDict], expenses: list[ExpenseDict], 
     return (month_result, month_inc, month_exp, categories)
 
 
-def build_complete_stats(date_str: str, incomes: list[IncomeDict], expenses: list[ExpenseDict], date: ParsedDate) -> CompleteStats:
+def build_complete_stats(
+    date_str: str,
+    incomes: list[IncomeDict],
+    expenses: list[ExpenseDict],
+    date: ParsedDate
+) -> CompleteStats:
     capital = calc_incomes(incomes, date) - calc_expenses(expenses, date)
     monthly_stats = build_monthly_stats(incomes, expenses, date)
 
@@ -242,12 +287,18 @@ def build_output(complete_stats: CompleteStats) -> list[str]:
 
     return lines
 
+
 def calc_capital(incomes, expenses, date):
     total_inc = calc_incomes(incomes, date)
     total_exp = calc_expenses(expenses, date)
     return total_inc - total_exp
 
-def process_stats(parts: list[str], incomes: list[IncomeDict], expenses: list[ExpenseDict]) -> str:
+
+def process_stats(
+    parts: list[str],
+    incomes: list[IncomeDict],
+    expenses: list[ExpenseDict]
+) -> str:
     if len(parts) != STATS_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -260,7 +311,13 @@ def process_stats(parts: list[str], incomes: list[IncomeDict], expenses: list[Ex
     lines = build_output(complete_stats)
     return "\n".join(lines)
 
-def handle_command(command: str, parts: list[str], incomes: list[IncomeDict], expenses: list[ExpenseDict]) -> str:
+
+def handle_command(
+    command: str,
+    parts: list[str],
+    incomes: list[IncomeDict],
+    expenses: list[ExpenseDict]
+) -> str:
     if command == "income":
         return process_income(parts, incomes)
     if command == "cost":
@@ -278,6 +335,7 @@ def process_single_line(line: str, incomes: list[IncomeDict], expenses: list[Exp
     command = parts[0].lower()
     result = handle_command(command, parts, incomes, expenses)
     print(result)
+
 
 def main() -> None:
     incomes: list[IncomeDict] = []
