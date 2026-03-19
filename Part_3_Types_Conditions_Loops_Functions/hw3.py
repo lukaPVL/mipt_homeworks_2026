@@ -22,6 +22,8 @@ MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 ParsedDate = tuple[int, int, int]
 StatsData = tuple[str, float, float, float, float, dict[str, float]]
+IncomeDict = dict[str, float | ParsedDate]
+ExpenseDict = dict[str, str | float | ParsedDate]
 
 
 def is_leap_year(year: int) -> bool:
@@ -81,7 +83,7 @@ def validate_category(category: str) -> bool:
     return all(ch not in " .," for ch in category)
 
 
-def process_income(parts: list[str], incomes: list[dict]) -> str:
+def process_income(parts: list[str], incomes: list[IncomeDict]) -> str:
     if len(parts) != INCOME_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -100,7 +102,7 @@ def process_income(parts: list[str], incomes: list[dict]) -> str:
     return OP_SUCCESS_MSG
 
 
-def process_cost(parts: list[str], expenses: list[dict]) -> str:
+def process_cost(parts: list[str], expenses: list[ExpenseDict]) -> str:
     if len(parts) != COST_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -139,15 +141,15 @@ def is_same_month(date1: ParsedDate, date2: ParsedDate) -> bool:
     return date1[1] == date2[1] and date1[2] == date2[2]
 
 
-def calc_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
+def calc_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
     total = 0
     for income in incomes:
         if is_before_or_equal(income[DATE_KEY], target_date):
             total += income[AMOUNT_KEY]
-    return total
+    return float(total)
 
 
-def monthly_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
+def monthly_incomes(incomes: list[IncomeDict], target_date: ParsedDate) -> float:
     total = 0
     for income in incomes:
         if is_same_month(income[DATE_KEY], target_date):
@@ -155,7 +157,7 @@ def monthly_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
     return total
 
 
-def calc_expenses(expenses: list[dict], target_date: ParsedDate) -> float:
+def calc_expenses(expenses: list[dict[ParsedDate, float]], target_date: ParsedDate) -> float:
     total = 0
     for expense in expenses:
         if is_before_or_equal(expense[DATE_KEY], target_date):
@@ -163,7 +165,7 @@ def calc_expenses(expenses: list[dict], target_date: ParsedDate) -> float:
     return total
 
 
-def monthly_expenses(expenses: list[dict], target_date: ParsedDate) -> tuple[float, dict[str, float]]:
+def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> tuple[float, dict[str, float]]:
     total = 0
     categories: dict[str, float] = {}
 
@@ -186,9 +188,9 @@ def build_output(stats: StatsData) -> list[str]:
     ]
 
     if month_result >= 0:
-        lines.append(f"В этом месяце прибыль составила {month_result:.2f} рублей")
+        lines.append(f"B этом месяце прибыль составила {month_result:.2f} рублей")
     else:
-        lines.append(f"В этом месяце убыток составил {abs(month_result):.2f} рублей")
+        lines.append(f"B этом месяце убыток составил {abs(month_result):.2f} рублей")
 
     lines.extend([
         f"Доходы: {month_inc:.2f} рублей",
@@ -204,7 +206,7 @@ def build_output(stats: StatsData) -> list[str]:
     return lines
 
 
-def process_stats(parts: list[str], incomes: list[dict], expenses: list[dict]) -> str:
+def process_stats(parts: list[str], incomes: list[IncomeDict], expenses: list[ExpenseDict]) -> str:
     if len(parts) != STATS_ARGS:
         return UNKNOWN_COMMAND_MSG
 
@@ -231,8 +233,8 @@ def process_stats(parts: list[str], incomes: list[dict], expenses: list[dict]) -
 
 
 def main() -> None:
-    incomes: list[dict] = []
-    expenses: list[dict] = []
+    incomes: list[IncomeDict] = []
+    expenses: list[ExpenseDict] = []
 
     while True:
         try:
@@ -254,7 +256,7 @@ def main() -> None:
             result = process_stats(parts, incomes, expenses)
         else:
             result = UNKNOWN_COMMAND_MSG
-        
+
         print(result)
 
 
