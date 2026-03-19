@@ -5,6 +5,9 @@ NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 OP_SUCCESS_MSG = "Added"
 ALLOWED_SYMBOLS = "0123456789."
+AMOUNT_KEY = "amount"
+DATE_KEY = "date"
+CATEGORY_KEY = "category"
 
 DATE_FRAGMENTS = 3
 MONTHS_NUMBER = 12
@@ -14,9 +17,11 @@ INCOME_ARGS = 3
 COST_ARGS = 4
 STATS_ARGS = 2
 
+MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
 
 ParsedDate = tuple[int, int, int]
-
+StatsData = tuple[str, float, float, float, float, dict[str, float]]
 
 
 def is_leap_year(year: int) -> bool:
@@ -24,37 +29,35 @@ def is_leap_year(year: int) -> bool:
     second_check = (year % 400 == 0)
     return first_check or second_check
 
+
 def get_days_in_month(month: int, year: int) -> int:
     if month == FEBRUARY_NUMBER and is_leap_year(year):
         return FEBRUARY_DAYS_COUNT
 
-    days_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    return days_in_months[month - 1]
+    return MONTH_DAYS[month - 1]
+
 
 def extract_date(maybe_dt: str) -> ParsedDate | None:
     fragments = maybe_dt.split("-")
     if len(fragments) != DATE_FRAGMENTS:
         return None
 
-    if any (not fragment.isdigit() for fragment in fragments):
+    if any(not fragment.isdigit() for fragment in fragments):
         return None
 
     day = int(fragments[0])
     month = int(fragments[1])
     year = int(fragments[2])
 
-    max_days_in_month = get_days_in_month(month, year)
-
-    if day <= 0 or day > max_days_in_month:
+    if not (1 <= month <= MONTHS_NUMBER and year > 0):
         return None
 
-    if month <= 0 or month > MONTHS_NUMBER:
-        return None
-
-    if year <= 0:
+    max_days = get_days_in_month(month, year)
+    if not (1 <= day <= max_days):
         return None
 
     return day, month, year
+
 
 def parse_amount(amount_str: str) -> float | None:
     amount_str = amount_str.replace(",", ".")
@@ -73,8 +76,10 @@ def parse_amount(amount_str: str) -> float | None:
 
     return amount
 
+
 def validate_category(category: str) -> bool:
     return all(ch not in " .," for ch in category)
+
 
 def process_income(parts: list[str], incomes: list[dict]) -> str:
     if len(parts) != INCOME_ARGS:
@@ -88,11 +93,12 @@ def process_income(parts: list[str], incomes: list[dict]) -> str:
     if date is None:
         return INCORRECT_DATE_MSG
 
-    incomes.append( {
-        "amount": amount,
-        "date": date
+    incomes.append({
+        AMOUNT_KEY: amount,
+        DATE_KEY: date
     })
     return OP_SUCCESS_MSG
+
 
 def process_cost(parts: list[str], expenses: list[dict]) -> str:
     if len(parts) != COST_ARGS:
@@ -111,12 +117,13 @@ def process_cost(parts: list[str], expenses: list[dict]) -> str:
         return UNKNOWN_COMMAND_MSG
 
     expenses.append({
-        "category": category,
-        "amount": amount,
-        "date": date
+        CATEGORY_KEY: category,
+        AMOUNT_KEY: amount,
+        DATE_KEY: date
     })
 
     return OP_SUCCESS_MSG
+
 
 def is_before_or_equal(date1: ParsedDate, date2: ParsedDate) -> bool:
     if date1[2] != date2[2]:
@@ -127,43 +134,75 @@ def is_before_or_equal(date1: ParsedDate, date2: ParsedDate) -> bool:
 
     return date1[0] <= date2[0]
 
+
 def is_same_month(date1: ParsedDate, date2: ParsedDate) -> bool:
     return date1[1] == date2[1] and date1[2] == date2[2]
 
+
 def calc_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
-    total = 0.0
+    total = 0
     for income in incomes:
-        if is_before_or_equal(income["date"], target_date):
-            total += income["amount"]
+        if is_before_or_equal(income[DATE_KEY], target_date):
+            total += income[AMOUNT_KEY]
     return total
+
 
 def monthly_incomes(incomes: list[dict], target_date: ParsedDate) -> float:
-    total = 0.0
+    total = 0
     for income in incomes:
-        first_check = is_same_month(income["date"], target_date)
-        second_check = is_before_or_equal(income["date"], target_date)
-        if first_check and second_check:
-            total += income["amount"]
+        if is_same_month(income[DATE_KEY], target_date):
+            total += income[AMOUNT_KEY]
     return total
+
 
 def calc_expenses(expenses: list[dict], target_date: ParsedDate) -> float:
-    total = 0.0
+    total = 0
     for expense in expenses:
-        if is_before_or_equal(expense["date"], target_date):
-            total += expense["amount"]
+        if is_before_or_equal(expense[DATE_KEY], target_date):
+            total += expense[AMOUNT_KEY]
     return total
 
+
 def monthly_expenses(expenses: list[dict], target_date: ParsedDate) -> tuple[float, dict[str, float]]:
-    total = 0.0
+    total = 0
     categories: dict[str, float] = {}
 
     for expense in expenses:
-        if is_same_month(expense["date"], target_date) and is_before_or_equal(expense["date"], target_date):
-            total += expense["amount"]
-            cat = expense["category"]
-            categories[cat] = categories.get(cat, 0.0) + expense["amount"]
+        if not is_same_month(expense[DATE_KEY], target_date):
+            continue
+        total += expense[AMOUNT_KEY]
+        cat = expense[CATEGORY_KEY]
+        categories[cat] = categories.get(cat, 0) + expense[AMOUNT_KEY]
 
-    return total, categories
+    return float(total), categories
+
+
+def build_output(stats: StatsData) -> list[str]:
+    date_str, capital, month_result, month_inc, month_exp, categories = stats
+
+    lines = [
+        f"Ваша статистика по состоянию на {date_str}:",
+        f"Суммарный капитал: {capital:.2f} рублей",
+    ]
+
+    if month_result >= 0:
+        lines.append(f"В этом месяце прибыль составила {month_result:.2f} рублей")
+    else:
+        lines.append(f"В этом месяце убыток составил {abs(month_result):.2f} рублей")
+
+    lines.extend([
+        f"Доходы: {month_inc:.2f} рублей",
+        f"Расходы: {month_exp:.2f} рублей",
+        "",
+        "Детализация (категория: сумма):",
+    ])
+
+    if categories:
+        for i, cat in enumerate(sorted(categories), 1):
+            lines.append(f"{i}. {cat}: {categories[cat]:.0f}")
+
+    return lines
+
 
 def process_stats(parts: list[str], incomes: list[dict], expenses: list[dict]) -> str:
     if len(parts) != STATS_ARGS:
@@ -175,32 +214,21 @@ def process_stats(parts: list[str], incomes: list[dict], expenses: list[dict]) -
 
     total_inc = calc_incomes(incomes, date)
     total_exp = calc_expenses(expenses, date)
-    capital = total_inc - total_exp
-
     month_inc = monthly_incomes(incomes, date)
     month_exp, categories = monthly_expenses(expenses, date)
-    month_result = month_inc - month_exp
 
-    output = []
-    output.append(f"Ваша статистика по состоянию на {parts[1]}:")
-    output.append(f"Суммарный капитал: {capital:.2f} рублей")
+    stats: StatsData = (
+        parts[1],
+        total_inc - total_exp,
+        month_inc - month_exp,
+        month_inc,
+        month_exp,
+        categories
+    )
 
-    if month_result >= 0:
-        output.append(f"B этом месяце прибыль составила {month_result:.2f} рублей")
-    else:
-        output.append(f"B этом месяце убыток составил {abs(month_result):.2f} рублей")
+    lines = build_output(stats)
+    return "\n".join(lines)
 
-    output.append(f"Доходы: {month_inc:.2f} рублей")
-    output.append(f"Расходы: {month_exp:.2f} рублей")
-    output.append("")
-    output.append("Детализация (категория: сумма):")
-
-    if categories:
-        sorted_cats = sorted(categories.keys())
-        for i, cat in enumerate(sorted_cats, 1):
-            output.append(f"{i}. {cat}: {categories[cat]:.0f}")
-
-    return "\n".join(output)
 
 def main() -> None:
     incomes: list[dict] = []
@@ -220,15 +248,14 @@ def main() -> None:
 
         if command == "income":
             result = process_income(parts, incomes)
-            print(result)
         elif command == "cost":
             result = process_cost(parts, expenses)
-            print(result)
         elif command == "stats":
             result = process_stats(parts, incomes, expenses)
-            print(result)
         else:
-            print(UNKNOWN_COMMAND_MSG)
+            result = UNKNOWN_COMMAND_MSG
+        
+        print(result)
 
 
 if __name__ == "__main__":
