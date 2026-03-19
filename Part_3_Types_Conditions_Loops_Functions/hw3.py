@@ -218,7 +218,7 @@ def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> Mo
             continue
         if not isinstance(expense_category, str):
             continue
-            
+
         if not is_same_month(expense_date, target_date):
             continue
 
@@ -288,7 +288,7 @@ def build_output(complete_stats: CompleteStats) -> list[str]:
     return lines
 
 
-def calc_capital(incomes, expenses, date):
+def calc_capital(incomes: list[IncomeDict], expenses: list[ExpenseDict], date: ParsedDate):
     total_inc = calc_incomes(incomes, date)
     total_exp = calc_expenses(expenses, date)
     return total_inc - total_exp
