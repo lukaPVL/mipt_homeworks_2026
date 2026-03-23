@@ -125,6 +125,17 @@ def income_handler(amount: float, income_date: str) -> str:
     return OP_SUCCESS_MSG
 
 
+def is_valid_category(category_name: str) -> bool:
+    if "::" in category_name:
+        parts = category_name.split("::", 1)
+        return parts[0] in EXPENSE_CATEGORIES and parts[1] in EXPENSE_CATEGORIES[parts[0]]
+
+    for main_cat, subcats in EXPENSE_CATEGORIES.items():
+        if category_name in subcats or category_name == main_cat:
+            return True
+    return False
+
+
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     date = extract_date(income_date)
     if date is None:
@@ -133,13 +144,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
 
-    category_exists = False
-    for main_category, subcategories in EXPENSE_CATEGORIES.items():
-        if category_name in subcategories or category_name == main_category:
-            category_exists = True
-            break
-
-    if not category_exists:
+    if not _is_valid_category(category_name):
         return NOT_EXISTS_CATEGORY
 
     financial_transactions_storage.append({
