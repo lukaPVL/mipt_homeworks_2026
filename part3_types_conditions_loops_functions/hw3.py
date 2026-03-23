@@ -144,7 +144,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
 
-    if not _is_valid_category(category_name):
+    if not is_valid_category(category_name):
         return NOT_EXISTS_CATEGORY
 
     financial_transactions_storage.append({
