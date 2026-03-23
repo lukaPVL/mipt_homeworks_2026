@@ -109,10 +109,6 @@ def parse_amount(amount_str: str) -> float | None:
     return amount
 
 
-def validate_category(category: str) -> bool:
-    return all(ch not in " .," for ch in category)
-
-
 def income_handler(amount: float, income_date: str) -> str:
     date = extract_date(income_date)
     if date is None:
@@ -123,7 +119,7 @@ def income_handler(amount: float, income_date: str) -> str:
 
     financial_transactions_storage.append({
         AMOUNT_KEY: amount,
-        DATE_KEY: income_date
+        DATE_KEY: date
     })
 
     return OP_SUCCESS_MSG
@@ -133,17 +129,23 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     date = extract_date(income_date)
     if date is None:
         return INCORRECT_DATE_MSG
-    
+
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
 
-    if not validate_category(category_name):
-        return UNKNOWN_COMMAND_MSG
+    category_exists = False
+    for main_category, subcategories in EXPENSE_CATEGORIES.items():
+        if category_name in subcategories or category_name == main_category:
+            category_exists = True
+            break
+
+    if not category_exists:
+        return NOT_EXISTS_CATEGORY
 
     financial_transactions_storage.append({
         CATEGORY_KEY: category_name,
         AMOUNT_KEY: amount,
-        DATE_KEY: income_date
+        DATE_KEY: date
     })
 
     return OP_SUCCESS_MSG
@@ -152,9 +154,8 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 def cost_categories_handler() -> str:
     categories_list = []
     for main_category, subcategories in EXPENSE_CATEGORIES.items():
-        categories_list.append(f"{main_category}:")
         for subcategory in subcategories:
-            categories_list.append(f"  - {subcategory}")
+            categories_list.append(f"{main_category}::{subcategory}")
 
     return "\n".join(categories_list)
 
@@ -172,14 +173,14 @@ def stats_handler(report_date: str) -> str:
             expenses.append({
                 CATEGORY_KEY: transaction[CATEGORY_KEY],
                 AMOUNT_KEY: transaction[AMOUNT_KEY],
-                DATE_KEY: extract_date(transaction[DATE_KEY])
+                DATE_KEY: transaction[DATE_KEY]
             })
         else:
             incomes.append({
                 AMOUNT_KEY: transaction[AMOUNT_KEY],
-                DATE_KEY: extract_date(transaction[DATE_KEY])
+                DATE_KEY: transaction[DATE_KEY]
             })
-    
+
     complete_stats = build_complete_stats(report_date, incomes, expenses, date)
     lines = build_output(complete_stats)
     return "\n".join(lines)
@@ -360,10 +361,6 @@ def process_income(parts: list[str]) -> str:
     if amount is None:
         return NONPOSITIVE_VALUE_MSG
 
-    date = extract_date(parts[2])
-    if date is None:
-        return INCORRECT_DATE_MSG
-
     return income_handler(amount, parts[2])
 
 
@@ -375,13 +372,7 @@ def process_cost(parts: list[str]) -> str:
     if amount is None:
         return NONPOSITIVE_VALUE_MSG
 
-    date = extract_date(parts[3])
-    if date is None:
-        return INCORRECT_DATE_MSG
-
     category = parts[1]
-    if not validate_category(category):
-        return UNKNOWN_COMMAND_MSG
 
     return cost_handler(category, amount, parts[3])
 
