@@ -111,16 +111,17 @@ def parse_amount(amount_str: str) -> float | None:
 
 def income_handler(amount: float, income_date: str) -> str:
     date = extract_date(income_date)
+
+    financial_transactions_storage.append({
+        AMOUNT_KEY: amount,
+        DATE_KEY: date if date is not None else income_date
+    })
+
     if date is None:
         return INCORRECT_DATE_MSG
 
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
-
-    financial_transactions_storage.append({
-        AMOUNT_KEY: amount,
-        DATE_KEY: date
-    })
 
     return OP_SUCCESS_MSG
 
@@ -138,6 +139,13 @@ def is_valid_category(category_name: str) -> bool:
 
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     date = extract_date(income_date)
+
+    financial_transactions_storage.append({
+        CATEGORY_KEY: category_name,
+        AMOUNT_KEY: amount,
+        DATE_KEY: date if date is not None else income_date
+    })
+
     if date is None:
         return INCORRECT_DATE_MSG
 
@@ -146,12 +154,6 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 
     if not is_valid_category(category_name):
         return NOT_EXISTS_CATEGORY
-
-    financial_transactions_storage.append({
-        CATEGORY_KEY: category_name,
-        AMOUNT_KEY: amount,
-        DATE_KEY: date
-    })
 
     return OP_SUCCESS_MSG
 
@@ -174,6 +176,10 @@ def stats_handler(report_date: str) -> str:
     expenses: list[ExpenseDict] = []
 
     for transaction in financial_transactions_storage:
+
+        if not isinstance(transaction[DATE_KEY], tuple):
+            continue
+
         if CATEGORY_KEY in transaction:
             expenses.append({
                 CATEGORY_KEY: transaction[CATEGORY_KEY],
