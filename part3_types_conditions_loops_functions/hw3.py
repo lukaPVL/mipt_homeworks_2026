@@ -112,16 +112,18 @@ def parse_amount(amount_str: str) -> float | None:
 def income_handler(amount: float, income_date: str) -> str:
     date = extract_date(income_date)
 
-    financial_transactions_storage.append({
-        AMOUNT_KEY: amount,
-        DATE_KEY: date if date is not None else income_date
-    })
-
     if date is None:
+        financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
 
     if amount <= 0:
+        financial_transactions_storage.append({})
         return NONPOSITIVE_VALUE_MSG
+
+    financial_transactions_storage.append({
+        AMOUNT_KEY: amount,
+        DATE_KEY: date
+    })
 
     return OP_SUCCESS_MSG
 
@@ -140,20 +142,23 @@ def is_valid_category(category_name: str) -> bool:
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     date = extract_date(income_date)
 
-    financial_transactions_storage.append({
-        CATEGORY_KEY: category_name,
-        AMOUNT_KEY: amount,
-        DATE_KEY: date if date is not None else income_date
-    })
-
     if date is None:
+        financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
 
     if amount <= 0:
+        financial_transactions_storage.append({})
         return NONPOSITIVE_VALUE_MSG
 
     if not is_valid_category(category_name):
+        financial_transactions_storage.append({})
         return NOT_EXISTS_CATEGORY
+
+    financial_transactions_storage.append({
+        CATEGORY_KEY: category_name,
+        AMOUNT_KEY: amount,
+        DATE_KEY: date
+    })
 
     return OP_SUCCESS_MSG
 
@@ -161,8 +166,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 def cost_categories_handler() -> str:
     categories_list = []
     for main_category, subcategories in EXPENSE_CATEGORIES.items():
-        for subcategory in subcategories:
-            categories_list.append(f"{main_category}::{subcategory}")
+        categories_list.extend([f"{main_category}::{subcategory}" for subcategory in subcategories])
 
     return "\n".join(categories_list)
 
