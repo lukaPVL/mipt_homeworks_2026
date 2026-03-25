@@ -172,6 +172,8 @@ def cost_categories_handler() -> str:
 
     return "\n".join(categories_list)
 
+def has_required_fields(transaction: dict[str, Any], required_fields: list[str]) -> bool:
+    return any(transaction.get(field) is None for field in required_fields)
 
 def stats_handler(report_date: str) -> str:
     date = extract_date(report_date)
@@ -187,12 +189,18 @@ def stats_handler(report_date: str) -> str:
             continue
 
         if CATEGORY_KEY in transaction:
+            if has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
+                continue
+
             expenses.append({
                 CATEGORY_KEY: transaction.get(CATEGORY_KEY),
                 AMOUNT_KEY: transaction.get(AMOUNT_KEY),
                 DATE_KEY: transaction.get(DATE_KEY)
             })
         else:
+            if has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
+                continue
+
             incomes.append({
                 AMOUNT_KEY: transaction.get(AMOUNT_KEY),
                 DATE_KEY: transaction.get(DATE_KEY)
