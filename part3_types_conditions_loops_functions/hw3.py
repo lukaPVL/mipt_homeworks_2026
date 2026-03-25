@@ -197,19 +197,36 @@ def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
         DATE_KEY: transaction.get(DATE_KEY)
     }
 
+
+def process_expense_transaction(transaction: dict[str, Any], expenses: list[ExpenseDict]) -> None:
+    expense = collect_expense(transaction)
+    if expense is not None:
+        expenses.append(expense)
+
+
+def process_income_transaction(transaction: dict[str, Any], incomes: list[IncomeDict]) -> None:
+    income = collect_income(transaction)
+    if income is not None:
+        incomes.append(income)
+
+
+def process_single_transaction(
+    transaction: dict[str, Any],
+    incomes: list[IncomeDict],
+    expenses: list[ExpenseDict]
+) -> None:
+    if not isinstance(transaction[DATE_KEY], tuple):
+        return
+
+    if CATEGORY_KEY in transaction:
+        process_expense_transaction(transaction, expenses)
+    else:
+        process_income_transaction(transaction, incomes)
+
+
 def transaction_processing(incomes: list[IncomeDict], expenses: list[ExpenseDict]) -> None:
     for transaction in financial_transactions_storage:
-        if not isinstance(transaction[DATE_KEY], tuple):
-            continue
-
-        if CATEGORY_KEY in transaction:
-            expense = collect_expense(transaction)
-            if expense is not None:
-                expenses.append(expense)
-        else:
-            income = collect_income(transaction)
-            if income is not None:
-                incomes.append(income)
+        process_single_transaction(transaction, incomes, expenses)
 
 
 def stats_handler(report_date: str) -> str:
