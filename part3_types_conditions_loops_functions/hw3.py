@@ -192,14 +192,10 @@ def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
     if not isinstance(date, tuple):
         return None
 
-    category: str = category_raw
-    amount: float = float(amount_raw)
-    date: ParsedDate = date_raw
-
     return {
-        CATEGORY_KEY: transaction.get(CATEGORY_KEY),
-        AMOUNT_KEY: transaction.get(AMOUNT_KEY),
-        DATE_KEY: transaction.get(DATE_KEY)
+        CATEGORY_KEY: category,
+        AMOUNT_KEY: float(amount),
+        DATE_KEY: date
     }
 
 
@@ -209,18 +205,14 @@ def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
 
     amount = transaction.get(AMOUNT_KEY)
     date = transaction.get(DATE_KEY)
-
     if not isinstance(amount, (int, float)):
         return None
     if not isinstance(date, tuple):
         return None
 
-    amount: float = float(amount_raw)
-    date: ParsedDate = date_raw
-
     return {
-        AMOUNT_KEY: transaction.get(AMOUNT_KEY),
-        DATE_KEY: transaction.get(DATE_KEY)
+        AMOUNT_KEY: float(amount),
+        DATE_KEY: date
     }
 
 
