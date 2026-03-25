@@ -197,15 +197,7 @@ def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
         DATE_KEY: transaction.get(DATE_KEY)
     }
 
-
-def stats_handler(report_date: str) -> str:
-    date = extract_date(report_date)
-    if date is None:
-        return INCORRECT_DATE_MSG
-
-    incomes: list[IncomeDict] = []
-    expenses: list[ExpenseDict] = []
-
+def transaction_processing(incomes: list[IncomeDict], expenses: list[ExpenseDict]) -> None:
     for transaction in financial_transactions_storage:
         if not isinstance(transaction[DATE_KEY], tuple):
             continue
@@ -218,6 +210,17 @@ def stats_handler(report_date: str) -> str:
             income = collect_income(transaction)
             if income is not None:
                 incomes.append(income)
+
+
+def stats_handler(report_date: str) -> str:
+    date = extract_date(report_date)
+    if date is None:
+        return INCORRECT_DATE_MSG
+
+    incomes: list[IncomeDict] = []
+    expenses: list[ExpenseDict] = []
+
+    transaction_processing(incomes, expenses)
 
     complete_stats = build_complete_stats(report_date, incomes, expenses, date)
     lines = build_output(complete_stats)
