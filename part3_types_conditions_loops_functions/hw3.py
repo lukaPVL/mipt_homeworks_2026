@@ -131,7 +131,9 @@ def income_handler(amount: float, income_date: str) -> str:
 def is_valid_category(category_name: str) -> bool:
     if "::" in category_name:
         parts = category_name.split("::", 1)
-        return parts[0] in EXPENSE_CATEGORIES and parts[1] in EXPENSE_CATEGORIES[parts[0]]
+        first_check = parts[0] in EXPENSE_CATEGORIES
+        second_check = parts[1] in EXPENSE_CATEGORIES[parts[0]]
+        return first_check and second_check
 
     for main_cat, subcats in EXPENSE_CATEGORIES.items():
         if category_name in subcats or category_name == main_cat:
@@ -186,14 +188,14 @@ def stats_handler(report_date: str) -> str:
 
         if CATEGORY_KEY in transaction:
             expenses.append({
-                CATEGORY_KEY: transaction[CATEGORY_KEY],
-                AMOUNT_KEY: transaction[AMOUNT_KEY],
-                DATE_KEY: transaction[DATE_KEY]
+                CATEGORY_KEY: transaction.get(CATEGORY_KEY),
+                AMOUNT_KEY: transaction.get(AMOUNT_KEY),
+                DATE_KEY: transaction.get(DATE_KEY)
             })
         else:
             incomes.append({
-                AMOUNT_KEY: transaction[AMOUNT_KEY],
-                DATE_KEY: transaction[DATE_KEY]
+                AMOUNT_KEY: transaction.get(AMOUNT_KEY),
+                DATE_KEY: transaction.get(DATE_KEY)
             })
 
     complete_stats = build_complete_stats(report_date, incomes, expenses, date)
