@@ -180,6 +180,17 @@ def has_required_fields(transaction: dict[str, Any], required_fields: list[str])
 def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
     if has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
         return None
+    
+    category = transaction.get(CATEGORY_KEY)
+    amount = transaction.get(AMOUNT_KEY)
+    date = transaction.get(DATE_KEY)
+
+    if not isinstance(category, str):
+        return None
+    if not isinstance(amount, (int, float)):
+        return None
+    if not isinstance(date, tuple):
+        return None
 
     return {
         CATEGORY_KEY: transaction.get(CATEGORY_KEY),
@@ -190,6 +201,14 @@ def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
 
 def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
     if has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
+        return None
+
+    amount = transaction.get(AMOUNT_KEY)
+    date = transaction.get(DATE_KEY)
+
+    if not isinstance(amount, (int, float)):
+        return None
+    if not isinstance(date, tuple):
         return None
 
     return {
