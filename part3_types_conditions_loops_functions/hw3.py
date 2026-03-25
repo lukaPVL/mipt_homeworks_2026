@@ -172,8 +172,31 @@ def cost_categories_handler() -> str:
 
     return "\n".join(categories_list)
 
+
 def has_required_fields(transaction: dict[str, Any], required_fields: list[str]) -> bool:
     return any(transaction.get(field) is None for field in required_fields)
+
+
+def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
+    if has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
+        return None
+
+    return {
+        CATEGORY_KEY: transaction.get(CATEGORY_KEY),
+        AMOUNT_KEY: transaction.get(AMOUNT_KEY),
+        DATE_KEY: transaction.get(DATE_KEY)
+    }
+
+
+def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
+    if has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
+        return None
+
+    return {
+        AMOUNT_KEY: transaction.get(AMOUNT_KEY),
+        DATE_KEY: transaction.get(DATE_KEY)
+    }
+
 
 def stats_handler(report_date: str) -> str:
     date = extract_date(report_date)
@@ -184,27 +207,17 @@ def stats_handler(report_date: str) -> str:
     expenses: list[ExpenseDict] = []
 
     for transaction in financial_transactions_storage:
-
         if not isinstance(transaction[DATE_KEY], tuple):
             continue
 
         if CATEGORY_KEY in transaction:
-            if has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
-                continue
-
-            expenses.append({
-                CATEGORY_KEY: transaction.get(CATEGORY_KEY),
-                AMOUNT_KEY: transaction.get(AMOUNT_KEY),
-                DATE_KEY: transaction.get(DATE_KEY)
-            })
+            expense = collect_expense(transaction)
+            if expense is not None:
+                expenses.append(expense)
         else:
-            if has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
-                continue
-
-            incomes.append({
-                AMOUNT_KEY: transaction.get(AMOUNT_KEY),
-                DATE_KEY: transaction.get(DATE_KEY)
-            })
+            income = collect_income(transaction)
+            if income is not None:
+                incomes.append(income)
 
     complete_stats = build_complete_stats(report_date, incomes, expenses, date)
     lines = build_output(complete_stats)
