@@ -346,6 +346,7 @@ def process_single_expense(
 
 def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> MonthlyExpensesResult:
     categories: dict[str, float] = {}
+    total = 0
 
     for expense in expenses:
         amount, category_name = process_single_expense(expense, target_date)
