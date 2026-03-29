@@ -7,7 +7,6 @@ NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 NOT_EXISTS_CATEGORY = "Category not exists!"
 OP_SUCCESS_MSG = "Added"
-ALLOWED_SYMBOLS = "0123456789."
 AMOUNT_KEY = "amount"
 DATE_KEY = "date"
 CATEGORY_KEY = "category"
@@ -55,6 +54,8 @@ MonthlyExpensesResult = tuple[float, CategoriesData]
 MonthlyStats = tuple[float, float, float, CategoriesData]
 CompleteStats = tuple[str, float, MonthlyStats]
 
+ExpenseInfo = tuple[float, str | None]
+
 
 def is_leap_year(year: int) -> bool:
     first_check = (year % 4 == 0) and (year % 100 != 0)
@@ -94,11 +95,10 @@ def extract_date(maybe_dt: str) -> ParsedDate | None:
 def parse_amount(amount_str: str) -> float | None:
     amount_str = amount_str.replace(",", ".")
 
-    for char in amount_str:
-        if char not in ALLOWED_SYMBOLS:
-            return None
-
     if amount_str.count(".") > 1:
+        return None
+
+    if not amount_str.replace(".", "", 1).isdigit():
         return None
 
     amount = float(amount_str) if "." in amount_str else int(amount_str)
@@ -174,11 +174,11 @@ def cost_categories_handler() -> str:
 
 
 def has_required_fields(transaction: dict[str, Any], required_fields: list[str]) -> bool:
-    return any(transaction.get(field) is None for field in required_fields)
+    return all(transaction.get(field) is not None for field in required_fields)
 
 
 def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
-    if has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
+    if not has_required_fields(transaction, [CATEGORY_KEY, AMOUNT_KEY, DATE_KEY]):
         return None
 
     category = transaction.get(CATEGORY_KEY)
@@ -200,7 +200,7 @@ def collect_expense(transaction: dict[str, Any]) -> ExpenseDict | None:
 
 
 def collect_income(transaction: dict[str, Any]) -> IncomeDict | None:
-    if has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
+    if not has_required_fields(transaction, [AMOUNT_KEY, DATE_KEY]):
         return None
 
     amount = transaction.get(AMOUNT_KEY)
@@ -328,38 +328,31 @@ def calc_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> float
 
 def process_single_expense(
     expense: ExpenseDict,
-    target_date: ParsedDate,
-    categories: dict[str, float]
-) -> float:
+    target_date: ParsedDate
+) -> ExpenseInfo:
 
     expense_date = expense.get(DATE_KEY)
-    if not isinstance(expense_date, tuple):
-        return float(0)
-
-    if not is_same_month(expense_date, target_date):
-        return float(0)
+    if not isinstance(expense_date, tuple) or not is_same_month(expense_date, target_date):
+        return float(0), None
 
     expense_amount = expense.get(AMOUNT_KEY)
-    if not isinstance(expense_amount, (int, float)):
-        return float(0)
-
     expense_category = expense.get(CATEGORY_KEY)
-    if not isinstance(expense_category, str):
-        return float(0)
 
-    amount_float = float(expense_amount)
-    categories[expense_category] = categories.get(expense_category, 0) + amount_float
+    if not isinstance(expense_amount, (int, float)) or not isinstance(expense_category, str):
+        return float(0), None
 
-    return amount_float
+    return float(expense_amount), expense_category
 
 
 def monthly_expenses(expenses: list[ExpenseDict], target_date: ParsedDate) -> MonthlyExpensesResult:
     categories: dict[str, float] = {}
 
-    total = sum(
-        process_single_expense(expense, target_date, categories)
-        for expense in expenses
-    )
+    for expense in expenses:
+        amount, category_name = process_single_expense(expense, target_date)
+
+        if category_name and amount > 0:
+            total += amount
+            categories[category_name] = categories.get(category_name, float(0)) + amount
 
     return float(total), categories
 
