@@ -15,7 +15,6 @@ class DictStorage(Storage[K, V]):
     def set(self, key: K, value: V) -> None:
         self._data[key] = value
 
-
     def get(self, key: K) -> V | None:
         return self._data[key]
 
@@ -133,7 +132,19 @@ class MIPTCache(Cache[K, V]):
         self.policy.clear()
 
 
-
 class CachedProperty[V]:
-    def __init__(self, func: Callable[..., V]) -> None: ...
-    def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V: ...  # type: ignore[empty-body]
+    def __init__(self, func: Callable[..., V]) -> None:
+        self.func = func
+        self.attr_name = func.__name__
+
+    def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V:
+        if instance is None:
+            return self
+
+        result = instance.cache.get(self.attr_name)
+
+        if result is None:
+            result = self.func(instance)
+            instance.cache.set(self.attr_name, result)
+
+        return result
