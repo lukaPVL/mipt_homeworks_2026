@@ -146,7 +146,7 @@ class CachedProperty[V]:
 
     def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V:
         if instance is None:
-            return cast(V, self)
+            return V(self)
 
         result = instance.cache.get(self.attr_name)
 
