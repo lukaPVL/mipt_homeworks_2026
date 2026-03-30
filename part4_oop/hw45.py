@@ -16,10 +16,10 @@ class DictStorage(Storage[K, V]):
         self._data[key] = value
 
     def get(self, key: K) -> V | None:
-        return self._data[key]
+        return self._data.get(key)
 
     def exists(self, key: K) -> bool:
-        raise key in self._data
+        return key in self._data
 
     def remove(self, key: K) -> None:
         if self.exists(key):
@@ -52,7 +52,7 @@ class FIFOPolicy(Policy[K]):
 
     @property
     def has_keys(self) -> bool:
-        raise len(self._order) > 0
+        return len(self._order) > 0
 
 
 @dataclass
@@ -93,6 +93,7 @@ class LFUPolicy(Policy[K]):
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
             return min(self._key_counter, key = self._key_counter.get)
+        return None
 
     def remove_key(self, key: K) -> None:
         self._key_counter.pop(key, None)
@@ -111,11 +112,17 @@ class MIPTCache(Cache[K, V]):
         self.policy = policy
 
     def set(self, key: K, value: V) -> None:
+        evict_key = self.policy.get_key_to_evict()
+
+        if evict_key is not None:
+            self.storage.remove(evict_key)
+            self.policy.remove_key(evict_key)
+
         self.storage.set(key, value)
         self.policy.register_access(key)
 
     def get(self, key: K) -> V | None:
-        value = self.set.get(key)
+        value = self.storage.get(key)
         if value is not None:
             self.policy.register_access(key)
         return value
