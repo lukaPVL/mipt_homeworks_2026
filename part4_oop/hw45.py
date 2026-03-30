@@ -112,19 +112,26 @@ class MIPTCache(Cache[K, V]):
         self.policy = policy
 
     def set(self, key: K, value: V) -> None:
-        raise NotImplementedError
+        self.storage.set(key, value)
+        self.policy.register_access(key)
 
     def get(self, key: K) -> V | None:
-        raise NotImplementedError
+        value = self.set.get(key)
+        if value is not None:
+            self.policy.register_access(key)
+        return value
 
     def exists(self, key: K) -> bool:
-        raise NotImplementedError
+        return self.storage.exists(key)
 
     def remove(self, key: K) -> None:
-        raise NotImplementedError
+        self.storage.remove(key)
+        self.policy.remove_key(key)
 
     def clear(self) -> None:
-        raise NotImplementedError
+        self.storage.clear()
+        self.policy.clear()
+
 
 
 class CachedProperty[V]:
