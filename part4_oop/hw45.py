@@ -92,7 +92,7 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            return min(self._key_counter, key = self._key_counter.get)
+            return min(self._key_counter, key = lambda k: self._key_counter[k])
         return None
 
     def remove_key(self, key: K) -> None:
@@ -103,7 +103,7 @@ class LFUPolicy(Policy[K]):
 
     @property
     def has_keys(self) -> bool:
-        return len(self._key_counter)
+        return len(self._key_counter) > 0
 
 
 class MIPTCache(Cache[K, V]):
@@ -146,7 +146,7 @@ class CachedProperty[V]:
 
     def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V:
         if instance is None:
-            return self
+            return cast(V, self)
 
         result = instance.cache.get(self.attr_name)
 
