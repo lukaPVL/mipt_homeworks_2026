@@ -110,7 +110,7 @@ class LFUPolicy(Policy[K]):
         if memo_key is None:
             return None
         for key, value in self._key_counter.items():
-            if not self._basic_checks(key, value, min_freq):
+            if value > min_freq or key != self.previos:
                 continue
             if value != min_freq:
                 min_freq = value
@@ -119,17 +119,6 @@ class LFUPolicy(Policy[K]):
                 memo_key = key
 
         return memo_key
-    
-    def _basic_checks(self, key: K, value: int, min_freq: int) -> bool:   
-        return value <= min_freq and key != self.previos
-        
-    def _assigment_key_value(self, key: K, value: int) -> tuple[K, int]:
-        if value != min_freq:
-            min_freq = value
-            memo_key = key
-        elif self._key_entry[key] < self._key_entry[memo_key]:
-            memo_key = key
-        return memo_key, min_freq
 
     def _find_first_condidat(self) -> K | None:
         for key in self._key_counter:
