@@ -98,10 +98,10 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            return min(
-                self._key_counter.keys(),
-                key=lambda k: (self._key_counter[k], self._key_entry.get(k, 0))
-            )
+            min_freq = min(self._key_counter.values())
+            for key, freq in self._key_counter.items():
+                if freq == min_freq:
+                    return key
         return None
 
     def remove_key(self, key: K) -> None:
