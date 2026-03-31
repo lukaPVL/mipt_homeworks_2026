@@ -84,7 +84,7 @@ class LRUPolicy(Policy[K]):
 
 @dataclass
 class LFUPolicy(Policy[K]):
-    previos: K | None
+    previos: K | None = None
     capacity: int = 5
     _key_counter: dict[K, int] = field(default_factory=dict, init=False)
     _key_entry: dict[K, int] = field(default_factory=dict, init=False)
