@@ -104,13 +104,25 @@ class LFUPolicy(Policy[K]):
 
         return None
 
+    def remove_key(self, key: K) -> None:
+        self._key_counter.pop(key, None)
+        self.cache_time += 1
+
+    def clear(self) -> None:
+        self._key_counter.clear()
+        self.cache_time = 0
+
+    @property
+    def has_keys(self) -> bool:
+        return len(self._key_counter) > 0
+
     def _search_min_key(self) -> K | None:
         min_freq = float("inf")
         memo_key = self._find_first_condidat()
         if memo_key is None:
             return None
         for key, value in self._key_counter.items():
-            if value > min_freq or key != self.previos:
+            if value > min_freq or key == self.previos:
                 continue
             if value != min_freq:
                 min_freq = value
@@ -125,18 +137,6 @@ class LFUPolicy(Policy[K]):
             if key != self.previos:
                 return key
         return None
-
-    def remove_key(self, key: K) -> None:
-        self._key_counter.pop(key, None)
-        self.cache_time += 1
-
-    def clear(self) -> None:
-        self._key_counter.clear()
-        self.cache_time = 0
-
-    @property
-    def has_keys(self) -> bool:
-        return len(self._key_counter) > 0
 
 
 class MIPTCache(Cache[K, V]):
