@@ -100,14 +100,13 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            min_freq = float('inf')
-            memo_key = 0
+            min_freq = float("inf")
+            memo_key = None
             for key, value in self._key_counter.items():
                 if value < min_freq and key != self.previos:
                     min_freq = value
                     memo_key = key
-                if value == min_freq and key != self.previos:
-                    if self._key_entry[key] < self._key_entry[memo_key]:
+                if value == min_freq and key != self.previosc and self._key_entry[key] < self._key_entry[memo_key]:
                         memo_key = key
 
             return memo_key
