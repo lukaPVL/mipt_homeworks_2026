@@ -117,7 +117,7 @@ class LFUPolicy(Policy[K]):
                 memo_key = key
 
         return memo_key
-    
+
     def _find_first_condidat(self) -> K | None:
         for key in self._key_counter:
             if key != self.previos:
