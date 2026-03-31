@@ -110,10 +110,12 @@ class LFUPolicy(Policy[K]):
         if memo_key is None:
             return None
         for key, value in self._key_counter.items():
-            if value < min_freq and key != self.previos:
+            if value > min_freq:
+                continue
+            if value != min_freq and key != self.previos:
                 min_freq = value
                 memo_key = key
-            if value == min_freq and key != self.previos and self._key_entry[key] < self._key_entry[memo_key]:
+            elif key != self.previos and self._key_entry[key] < self._key_entry[memo_key]:
                 memo_key = key
 
         return memo_key
