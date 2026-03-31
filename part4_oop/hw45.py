@@ -84,11 +84,11 @@ class LRUPolicy(Policy[K]):
 
 @dataclass
 class LFUPolicy(Policy[K]):
+    previos: K | None
     capacity: int = 5
     _key_counter: dict[K, int] = field(default_factory=dict, init=False)
     _key_entry: dict[K, int] = field(default_factory=dict, init=False)
     cache_time: int = 0
-    previos: K | None
 
     def register_access(self, key: K) -> None:
         self._key_counter[key] = self._key_counter.get(key, 0) + 1
