@@ -117,26 +117,14 @@ class LFUPolicy(Policy[K]):
         return len(self._key_counter) > 0
 
     def _search_min_key(self) -> K | None:
-        min_freq = float("inf")
-        memo_key = self._find_first_condidat()
-        if memo_key is None:
+        candidates = [key for key in self._key_counter if key != self.previos] 
+        if not candidates:
             return None
-        for key, value in self._key_counter.items():
-            if value > min_freq or key == self.previos:
-                continue
-            if value != min_freq:
-                min_freq = value
-                memo_key = key
-            elif self._key_entry[key] < self._key_entry[memo_key]:
-                memo_key = key
 
-        return memo_key
-
-    def _find_first_condidat(self) -> K | None:
-        for key in self._key_counter:
-            if key != self.previos:
-                return key
-        return None
+        return min(
+            candidates, 
+            key=lambda k: (self._key_counter[k], self._key_entry[k])
+        )
 
 
 class MIPTCache(Cache[K, V]):
