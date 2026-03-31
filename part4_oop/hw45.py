@@ -107,6 +107,8 @@ class LFUPolicy(Policy[K]):
     def _search_min_key(self) -> K | None:
         min_freq = float("inf")
         memo_key = self._find_first_condidat()
+        if memo_key is None:
+            return None
         for key, value in self._key_counter.items():
             if value < min_freq and key != self.previos:
                 min_freq = value
