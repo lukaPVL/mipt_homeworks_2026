@@ -88,6 +88,7 @@ class LFUPolicy(Policy[K]):
     _key_counter: dict[K, int] = field(default_factory=dict, init=False)
     _key_entry: dict[K, int] = field(default_factory=dict, init=False)
     cache_time: int = 0
+    previos: K | None
 
     def register_access(self, key: K) -> None:
         self._key_counter[key] = self._key_counter.get(key, 0) + 1
@@ -95,15 +96,21 @@ class LFUPolicy(Policy[K]):
         if key not in self._key_entry:
             self.cache_time += 1
             self._key_entry[key] = self.cache_time
+            self.previos = key
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            min_freq = min(self._key_counter.values())
-            candidates = [key for key, value in self._key_counter.items() if value == min_freq]
-            if len(candidates) == 1:
-                return candidates[0]
-            else:
-                return min(self._key_entry, key= self._key_entry.get, default=None)
+            min_freq = float('inf')
+            memo_key = 0
+            for key, value in self._key_counter.items():
+                if value < min_freq and key != self.previos:
+                    min_freq = value
+                    memo_key = key
+                if value == min_freq and key != self.previos:
+                    if self._key_entry[key] < self._key_entry[memo_key]:
+                        memo_key = key
+
+            return memo_key
 
         return None
 
