@@ -117,12 +117,12 @@ class LFUPolicy(Policy[K]):
         return len(self._key_counter) > 0
 
     def _search_min_key(self) -> K | None:
-        candidates = [key for key in self._key_counter if key != self.previos] 
+        candidates = [key for key in self._key_counter if key != self.previos]
         if not candidates:
             return None
 
         return min(
-            candidates, 
+            candidates,
             key=lambda k: (self._key_counter[k], self._key_entry[k])
         )
 
