@@ -121,8 +121,10 @@ class LFUPolicy(Policy[K]):
         if not candidates:
             return None
 
-        return min(candidates,
-                    key=lambda k: (self._key_counter[k], self._key_entry[k]))
+        return min(candidates, key=lambda k: self._get_key_metrics)
+
+    def _get_key_metrics(self, key: K) -> tuple[int, int]:
+        return self._key_counter[key], self._key_entry[key]
 
 
 class MIPTCache(Cache[K, V]):
