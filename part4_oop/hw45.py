@@ -100,18 +100,21 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            min_freq = float("inf")
-            memo_key = 0
-            for key, value in self._key_counter.items():
-                if value < min_freq and key != self.previos:
-                    min_freq = value
-                    memo_key = key
-                if value == min_freq and key != self.previos and self._key_entry[key] < self._key_entry[memo_key]:
-                    memo_key = key
-
-            return memo_key
+            return self._search_min_key()
 
         return None
+    
+    def _search_min_key(self) -> K | None:
+        min_freq = float("inf")
+        memo_key = None
+        for key, value in self._key_counter.items():
+            if value < min_freq and key != self.previos:
+                min_freq = value
+                memo_key = key
+            if value == min_freq and key != self.previos and self._key_entry[key] < self._key_entry[memo_key]:
+                memo_key = key
+
+        return memo_key
 
     def remove_key(self, key: K) -> None:
         self._key_counter.pop(key, None)
@@ -165,11 +168,11 @@ class CachedProperty[V]:
 
     def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V:
         if instance is None:
-            return V(self)
+            return self # type: ignore[return-value]
 
         result = instance.cache.get(self.attr_name)
 
-        if result is None:
+        if result is None: 
             result = self.func(instance)
             instance.cache.set(self.attr_name, result)
 
