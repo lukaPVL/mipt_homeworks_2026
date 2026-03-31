@@ -118,13 +118,8 @@ class LFUPolicy(Policy[K]):
 
     def _search_min_key(self) -> K | None:
         candidates = [key for key in self._key_counter if key != self.previos]
-        if not candidates:
-            return None
 
-        return min(candidates, key=lambda k: self._get_key_metrics)
-
-    def _get_key_metrics(self, key: K) -> tuple[int, int]:
-        return self._key_counter[key], self._key_entry[key]
+        return min(candidates, key=lambda k: (self._key_counter[k], self._key_entry[k]), default=None)
 
 
 class MIPTCache(Cache[K, V]):
