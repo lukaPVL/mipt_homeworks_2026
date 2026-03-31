@@ -93,7 +93,7 @@ class LFUPolicy(Policy[K]):
         self._key_counter[key] = self._key_counter.get(key, 0) + 1
         self.cache_time += 1
         if key not in self._key_entry:
-            self._time += 1
+            self.cache_time += 1
             self._key_entry[key] = self._time
 
     def get_key_to_evict(self) -> K | None:
