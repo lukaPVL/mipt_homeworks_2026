@@ -23,7 +23,7 @@ class DictStorage(Storage[K, V]):
 
     def remove(self, key: K) -> None:
         if self.exists(key):
-            del self._data[key]
+            dict.pop(self._data[key], None)
 
     def clear(self) -> None:
         self._data.clear()
@@ -94,7 +94,6 @@ class LFUPolicy(Policy[K]):
         self._key_counter[key] = self._key_counter.get(key, 0) + 1
         self.cache_time += 1
         if key not in self._key_entry:
-            self.cache_time += 1
             self._key_entry[key] = self.cache_time
             self.previos = key
 
@@ -124,9 +123,6 @@ class LFUPolicy(Policy[K]):
         candidates.sort(key=self._key_entry.__getitem__)
         candidates.sort(key=self._key_counter.__getitem__)
         return candidates[0]
-
-    def _get_key_metrics(self, key: K) -> tuple[int, int]:
-        return self._key_counter[key], self._key_entry[key]
 
 
 class MIPTCache(Cache[K, V]):
