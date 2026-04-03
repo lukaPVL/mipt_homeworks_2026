@@ -23,7 +23,7 @@ class DictStorage(Storage[K, V]):
 
     def remove(self, key: K) -> None:
         if self.exists(key):
-            dict.pop(self._data[key], None)
+            self._data.pop(key, None)
 
     def clear(self) -> None:
         self._data.clear()
