@@ -53,6 +53,20 @@ class CircuitBreaker:
         self._fail_count = 0
         self._last_fail_time = None
 
+    def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
+            self._check_state(func)
+            try:
+                result = func(*args, **kwargs)
+            except self.triggers_on as e:
+                self._handle_failure(func, e)
+            else:
+                self._fail_count = 0
+                return result
+
+        return wrapper
+    
     def _check_state(self, func: CallableWithMeta) -> None:
         if self._last_fail_time is not None:
             if time.time() - self._last_fail_time < self.time_to_recover:
@@ -67,20 +81,6 @@ class CircuitBreaker:
             block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=UTC)
             raise BreakerError(TOO_MUCH, f"{func.__module__}.{func.__name__}", block_date_time) from error
         raise error
-
-    def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
-        @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
-            self._check_state(func)
-            try:
-                result = func(*args, **kwargs)
-            except self.triggers_on as e:
-                self._handle_failure(func, e)
-            else:
-                self._fail_count = 0
-                return result
-
-        return wrapper
 
 
 circuit_breaker = CircuitBreaker(5, 30, Exception)
