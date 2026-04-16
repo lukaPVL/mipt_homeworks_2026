@@ -74,7 +74,7 @@ class CircuitBreaker:
                 raise BreakerError(TOO_MUCH, f"{func.__module__}.{func.__name__}", block_date_time)
             self._last_fail_time = None
 
-    def _handle_failure(self, func: CallableWithMeta, error: Exception) -> NoReturn:
+    def _handle_failure(self, func: CallableWithMeta[Any, Any], error: Exception) -> NoReturn:
         self._fail_count += 1
         if self._fail_count >= self.critical_count:
             self._last_fail_time = time.time()
