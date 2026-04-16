@@ -1,9 +1,12 @@
-import time
-from datetime import datetime, timezone
 import functools
 import json
+import time
+from datetime import datetime, timezone
 from typing import Any, ParamSpec, Protocol, TypeVar
 from urllib.request import urlopen
+
+
+UTC = timezone.utc
 
 INVALID_CRITICAL_COUNT = "Breaker count must be positive integer!"
 INVALID_RECOVERY_TIME = "Breaker recovery time must be positive integer!"
@@ -39,13 +42,13 @@ class CircuitBreaker:
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
             errors.append(ValueError(INVALID_CRITICAL_COUNT))
-        
+
         if not isinstance(time_to_recover, int) or time_to_recover <= 0:
             errors.append(ValueError(INVALID_RECOVERY_TIME))
 
         if errors:
             raise ExceptionGroup(VALIDATIONS_FAILED, errors)
-        
+
         self.critical_count = critical_count
         self.time_to_recover = time_to_recover
         self.triggers_on = triggers_on
@@ -57,7 +60,7 @@ class CircuitBreaker:
     def _check_state(self, func: CallableWithMeta) -> None:
         if self._last_fail_time is not None:
             if time.time() - self._last_fail_time < self.time_to_recover:
-                block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=timezone.utc)
+                block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=UTC)
                 raise BreakerError(
                     TOO_MUCH,
                     f"{func.__module__}.{func.__name__}",
@@ -70,7 +73,7 @@ class CircuitBreaker:
         self._fail_count += 1
         if self._fail_count >= self.critical_count:
             self._last_fail_time = time.time()
-            block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=timezone.utc)
+            block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=UTC)
             raise BreakerError(
                 TOO_MUCH,
                 f"{func.__module__}.{func.__name__}",
@@ -85,10 +88,11 @@ class CircuitBreaker:
             self._check_state(func)
             try:
                 result = func(*args, **kwargs)
-                self._fail_count = 0
-                return result
             except self.triggers_on as e:
                 self._handle_failure(func, e)
+            else:
+                self._fail_count = 0
+                return result
 
         return wrapper
 
