@@ -66,7 +66,7 @@ class CircuitBreaker:
                 return result
 
         return wrapper
-    
+
     def _check_state(self, func: CallableWithMeta) -> None:
         if self._last_fail_time is not None:
             if time.time() - self._last_fail_time < self.time_to_recover:
