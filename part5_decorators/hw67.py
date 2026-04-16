@@ -1,12 +1,9 @@
 import functools
 import json
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, ParamSpec, Protocol, TypeVar
 from urllib.request import urlopen
-
-
-UTC = timezone.utc
 
 INVALID_CRITICAL_COUNT = "Breaker count must be positive integer!"
 INVALID_RECOVERY_TIME = "Breaker recovery time must be positive integer!"
