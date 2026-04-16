@@ -53,31 +53,20 @@ class CircuitBreaker:
         self._fail_count = 0
         self._last_fail_time = None
 
-
     def _check_state(self, func: CallableWithMeta) -> None:
         if self._last_fail_time is not None:
             if time.time() - self._last_fail_time < self.time_to_recover:
                 block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=UTC)
-                raise BreakerError(
-                    TOO_MUCH,
-                    f"{func.__module__}.{func.__name__}",
-                    block_date_time
-                )
+                raise BreakerError(TOO_MUCH, f"{func.__module__}.{func.__name__}", block_date_time)
             self._last_fail_time = None
-
 
     def _handle_failure(self, func: CallableWithMeta, error: Exception) -> None:
         self._fail_count += 1
         if self._fail_count >= self.critical_count:
             self._last_fail_time = time.time()
             block_date_time = datetime.fromtimestamp(self._last_fail_time, tz=UTC)
-            raise BreakerError(
-                TOO_MUCH,
-                f"{func.__module__}.{func.__name__}",
-                block_date_time
-            ) from error
+            raise BreakerError(TOO_MUCH, f"{func.__module__}.{func.__name__}", block_date_time) from error
         raise error
-
 
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         @functools.wraps(func)
