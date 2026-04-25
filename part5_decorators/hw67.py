@@ -43,6 +43,9 @@ class CircuitBreaker:
         if not isinstance(time_to_recover, int) or time_to_recover <= 0:
             errors.append(ValueError(INVALID_RECOVERY_TIME))
 
+        if not isinstance(triggers_on, type) or not issubclass(triggers_on, Exception):
+            errors.append(TypeError("triggers_on must be a subclass of Exception"))
+
         if errors:
             raise ExceptionGroup(VALIDATIONS_FAILED, errors)
 
