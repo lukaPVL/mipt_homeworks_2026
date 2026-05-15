@@ -21,16 +21,19 @@ def load_config() -> Config:
 
     yaml_config: dict = {}
     if os.path.exists('config.yaml'):
-        with open('config.yaml', 'r', encoding='utf-8') as f:
-            yaml_config = yaml.safe_load(f) or {}
+        try:
+            with open('config.yaml', 'r', encoding='utf-8') as f:
+                yaml_config = yaml.safe_load(f) or {}
+        except Exception as e:
+            print(f"Не удалось прочитать config.yaml: {e}. Поставлены дифолтные настройки")
 
     api_key = os.getenv('YANDEX_API_KEY') or yaml_config.get('api_key')
     folder_id = os.getenv('YANDEX_FOLDER_ID') or yaml_config.get('folder_id')
     api_host = os.getenv('API_HOST') or yaml_config.get('api_host', 'https://llm.api.cloud.yandex.net/v1')
 
-    limit_message = int(os.getenv('LIMIT_MESSAGE') or yaml_config.get('limit_message', 10))
-    limit_chars = int(os.getenv('LIMIT_CHARS') or yaml_config.get('limit_chars', 2000))
-    temperature = float(os.getenv('TEMPERATURE') or yaml_config.get('temperature', 0.7))
+    limit_message = get_int('limit_message', 10, yaml_config),
+    limit_chars = get_int('limit_chars', 2000, yaml_config),
+    temperature = get_float('temperature', 0.7, yaml_config),
     system_prompt = os.getenv('SYSTEM_PROMPT') or yaml_config.get('system_prompt')
 
     if not api_key or not folder_id:
@@ -46,3 +49,17 @@ def load_config() -> Config:
         temperature=temperature,
         system_prompt=system_prompt
     )
+
+def get_int(key: str, default: int, yaml_config: dict) -> int:
+    val = os.getenv(key.upper()) or yaml_config.get(key)
+    try:
+        return int(val) if val is not None else default
+    except (ValueError, TypeError):
+        return default
+
+def get_float(key: str, default: float, yaml_config: dict) -> float:
+    val = os.getenv(key.upper()) or yaml_config.get(key)
+    try:
+        return float(val) if val is not None else default
+    except (ValueError, TypeError):
+        return default
