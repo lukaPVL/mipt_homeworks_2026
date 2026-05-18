@@ -31,9 +31,9 @@ def load_config() -> Config:
     folder_id = os.getenv('YANDEX_FOLDER_ID') or yaml_config.get('folder_id')
     api_host = os.getenv('API_HOST') or yaml_config.get('api_host', 'https://llm.api.cloud.yandex.net/v1')
 
-    limit_message = get_int('limit_message', 10, yaml_config),
-    limit_chars = get_int('limit_chars', 2000, yaml_config),
-    temperature = get_float('temperature', 0.7, yaml_config),
+    limit_message = get_int('limit_message', 10, yaml_config)
+    limit_chars = get_int('limit_chars', 2000, yaml_config)
+    temperature = get_float('temperature', 0.7, yaml_config)
     system_prompt = os.getenv('SYSTEM_PROMPT') or yaml_config.get('system_prompt')
 
     if not api_key or not folder_id:
